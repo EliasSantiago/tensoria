@@ -16,6 +16,9 @@ spec:
         run.googleapis.com/cpu-startup-boost: "true"
         # Disable GPU zonal redundancy due to quota limits
         run.googleapis.com/gpu-zonal-redundancy-disabled: "true"
+        # Scaling limits
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "1"
     spec:
       containers:
       # ---------------------------------------------------------
