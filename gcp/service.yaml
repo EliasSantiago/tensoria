@@ -5,7 +5,7 @@ metadata:
   labels:
     cloud.googleapis.com/location: us-central1
   annotations:
-    run.googleapis.com/gpu-zonal-redundancy: "false"
+    run.googleapis.com/gpu-zonal-redundancy-disabled: "true"
     run.googleapis.com/launch-stage: BETA
 spec:
   template:
@@ -16,7 +16,7 @@ spec:
         # CPU boost for faster startup
         run.googleapis.com/cpu-startup-boost: "true"
         # Disable GPU zonal redundancy due to quota limits
-        run.googleapis.com/gpu-zonal-redundancy: "false"
+        run.googleapis.com/gpu-zonal-redundancy-disabled: "true"
     spec:
       containers:
       # ---------------------------------------------------------
