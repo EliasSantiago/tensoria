@@ -1,0 +1,69 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  SERVICE_NAME: tensoria
+  REPOSITORY: tensoria-api
+  GAR_LOCATION: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      # 2. Set up Cloud SDK
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # 3. Build and Push Container
+      - name: Build and Push
+        run: |
+          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}:${{ github.sha }} .
+          gcloud container images add-tag gcr.io/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}:${{ github.sha }} gcr.io/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}:latest --quiet
+
+      # 4. Prepare Service YAML
+      - name: Prepare Service Configuration
+        run: |
+          # Install envsubst
+          sudo apt-get install -y gettext-base
+          
+          # Export variables for substitution
+          export PROJECT_ID=${{ env.PROJECT_ID }}
+          export BUCKET_NAME="${{ env.PROJECT_ID }}-tensoria-models"
+          export API_KEY="${{ secrets.TENSORIA_API_KEY }}"
+          
+          # Substitute variables
+          envsubst < gcp/service.yaml > gcp/service-deployed.yaml
+
+      # 5. Deploy to Cloud Run
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run services replace gcp/service-deployed.yaml \
+            --region ${{ env.REGION }}
+            
+      # 6. Show Output
+      - name: Show Output
+        run: |
+          echo "✅ Deploy Complete!"
+          echo "URL: $(gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format 'value(status.url)')"
