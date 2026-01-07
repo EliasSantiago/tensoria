@@ -30,7 +30,7 @@ spec:
           value: "INFO"
         resources:
           limits:
-            cpu: "1000m"
+            cpu: "2000m"
             memory: "512Mi"
             
       # ---------------------------------------------------------
@@ -53,7 +53,7 @@ spec:
         # but we need to request the GPU resource.
         resources:
           limits:
-            cpu: "7000m"      # 7 vCPUs (Total limit is 8000m, API takes 1000m)
+            cpu: "6000m"      # 6 vCPUs (Total limit is 8000m, API takes 2000m)
             memory: "32Gi"    # 32 GB RAM
             nvidia.com/gpu: "1" # 1 NVIDIA L4 GPU
         startupProbe:
