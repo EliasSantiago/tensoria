@@ -60,6 +60,9 @@ jobs:
       - name: Debug Service YAML
         run: cat gcp/service-deployed.yaml
 
+      - name: Install Beta Components
+        run: gcloud components install beta --quiet
+
       - name: Deploy to Cloud Run
         run: |
           gcloud beta run services replace gcp/service-deployed.yaml \
