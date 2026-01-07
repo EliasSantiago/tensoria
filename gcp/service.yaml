@@ -54,7 +54,7 @@ spec:
         resources:
           limits:
             cpu: "6000m"      # 6 vCPUs (Total limit is 8000m, API takes 2000m)
-            memory: "32Gi"    # 32 GB RAM
+            memory: "24Gi"    # 24 GB RAM (Max for 6 vCPUs)
             nvidia.com/gpu: "1" # 1 NVIDIA L4 GPU
         startupProbe:
           httpGet:
