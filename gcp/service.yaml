@@ -5,7 +5,6 @@ metadata:
   labels:
     cloud.googleapis.com/location: us-central1
   annotations:
-    run.googleapis.com/gpu-zonal-redundancy-disabled: "true"
     run.googleapis.com/launch-stage: BETA
 spec:
   template:
