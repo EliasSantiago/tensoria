@@ -12,6 +12,8 @@ spec:
         run.googleapis.com/execution-environment: gen2
         # CPU boost for faster startup
         run.googleapis.com/cpu-startup-boost: "true"
+        # Disable GPU zonal redundancy due to quota limits
+        run.googleapis.com/gpu-zonal-redundancy: "false"
     spec:
       containers:
       # ---------------------------------------------------------
