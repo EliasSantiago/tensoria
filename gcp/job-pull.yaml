@@ -1,0 +1,48 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: tensoria-pull-model
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      template:
+        spec:
+          containers:
+          - image: ollama/ollama:latest
+            command: ["/bin/sh", "-c"]
+            # Script to start ollama server in background, pull model, then exit
+            args:
+            - |
+              ollama serve &
+              PID=$!
+              sleep 5
+              echo "Pulling model ${MODEL_NAME}..."
+              ollama pull ${MODEL_NAME}
+              echo "Done!"
+              kill $PID
+            env:
+            - name: OLLAMA_HOST
+              value: "localhost:11434"
+            - name: MODEL_NAME
+              value: "mistral" # Default, override when running
+            volumeMounts:
+            - name: ollama-models
+              mountPath: /root/.ollama
+            resources:
+              limits:
+                cpu: "2000m"
+                memory: "4Gi"
+          volumes:
+          - name: ollama-models
+            csi:
+              driver: gcsfuse.run.googleapis.com
+              readOnly: false
+              volumeAttributes:
+                bucketName: "${BUCKET_NAME}"
+                mountOptions: "implicit-dirs"
+          serviceAccountName: "${SERVICE_ACCOUNT}"

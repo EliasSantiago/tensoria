@@ -1,0 +1,106 @@
+# Tensoria - Production Configuration
+# Domain: tensoria.orkestrai.com.br
+
+services:
+  # =============================================================================
+  # OLLAMA - LLM Inference Engine
+  # =============================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tensoria-ollama
+    restart: always
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-5m}
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}
+    # GPU support for NVIDIA (enable if GPU available)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    networks:
+      - tensoria-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # =============================================================================
+  # API - FastAPI Backend
+  # =============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tensoria-api
+    restart: always
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-mistral}
+      - MAX_TOKENS=${MAX_TOKENS:-4096}
+      - DEFAULT_TEMPERATURE=${DEFAULT_TEMPERATURE:-0.7}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - tensoria-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================================================================
+  # NGINX - Reverse Proxy with SSL
+  # =============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: tensoria-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - ALLOWED_IP=${ALLOWED_IP:-127.0.0.1}
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+    command: /bin/sh -c "envsubst '\$ALLOWED_IP' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+    depends_on:
+      - api
+    networks:
+      - tensoria-internal
+      - tensoria-external
+
+  # =============================================================================
+  # CERTBOT - SSL Certificate Management
+  # =============================================================================
+  certbot:
+    image: certbot/certbot
+    container_name: tensoria-certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  tensoria-internal:
+    driver: bridge
+  tensoria-external:
+    driver: bridge
+
+volumes:
+  ollama_data:
+    name: tensoria-ollama-data

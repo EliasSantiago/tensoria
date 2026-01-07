@@ -1,0 +1,73 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: tensoria
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    metadata:
+      annotations:
+        # Gen2 is required for file system mounting
+        run.googleapis.com/execution-environment: gen2
+        # CPU boost for faster startup
+        run.googleapis.com/cpu-startup-boost: "true"
+    spec:
+      containers:
+      # ---------------------------------------------------------
+      # 1. API Container (Ingress)
+      # ---------------------------------------------------------
+      - image: gcr.io/${PROJECT_ID}/tensoria-api:latest
+        name: api
+        ports:
+        - containerPort: 8000
+        env:
+        - name: OLLAMA_BASE_URL
+          value: "http://localhost:11434"
+        - name: API_KEY
+          value: "${API_KEY}"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+            
+      # ---------------------------------------------------------
+      # 2. Ollama Sidecar (Inference Engine)
+      # ---------------------------------------------------------
+      - image: ollama/ollama:latest
+        name: ollama
+        env:
+        - name: OLLAMA_HOST
+          value: "localhost:11434"
+        # Keep models in memory for 5 minutes
+        - name: OLLAMA_KEEP_ALIVE
+          value: "5m"
+        volumeMounts:
+        - name: ollama-models
+          mountPath: /root/.ollama
+        resources:
+          limits:
+            # CPU is critical for inference!
+            # 4 vCPUs is a good starting point for 7B models
+            cpu: "4000m" 
+            memory: "8Gi"
+        startupProbe:
+          httpGet:
+            path: /api/tags
+            port: 11434
+          periodSeconds: 10
+          failureThreshold: 30
+          
+      # ---------------------------------------------------------
+      # Volumes
+      # ---------------------------------------------------------
+      volumes:
+      - name: ollama-models
+        csi:
+          driver: gcsfuse.run.googleapis.com
+          readOnly: false
+          volumeAttributes:
+            bucketName: "${BUCKET_NAME}"
+            mountOptions: "implicit-dirs"
