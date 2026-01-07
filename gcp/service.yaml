@@ -47,18 +47,21 @@ spec:
         volumeMounts:
         - name: ollama-models
           mountPath: /root/.ollama
+        # GPU Support Configuration
+        # ---------------------------------------------------------
+        # run.googleapis.com/container-dependencies is not needed for sidecars in Cloud Run
+        # but we need to request the GPU resource.
         resources:
           limits:
-            # CPU is critical for inference!
-            # 4 vCPUs is a good starting point for 7B models
-            cpu: "4000m" 
-            memory: "8Gi"
+            cpu: "8000m"      # 8 vCPUs
+            memory: "32Gi"    # 32 GB RAM
+            nvidia.com/gpu: "1" # 1 NVIDIA L4 GPU
         startupProbe:
           httpGet:
             path: /api/tags
             port: 11434
           periodSeconds: 10
-          failureThreshold: 30
+          failureThreshold: 60 # Increased timeout for model loading
           
       # ---------------------------------------------------------
       # Volumes
