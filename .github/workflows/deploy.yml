@@ -57,9 +57,12 @@ jobs:
           envsubst < gcp/service.yaml > gcp/service-deployed.yaml
 
       # 5. Deploy to Cloud Run
+      - name: Debug Service YAML
+        run: cat gcp/service-deployed.yaml
+
       - name: Deploy to Cloud Run
         run: |
-          gcloud run services replace gcp/service-deployed.yaml \
+          gcloud beta run services replace gcp/service-deployed.yaml \
             --region ${{ env.REGION }}
             
       # 6. Show Output
