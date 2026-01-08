@@ -21,6 +21,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+logger.info("Loading Tensoria API module...")
 
 # Determine if we're in production mode (API key is set)
 is_production = bool(settings.api_key)
@@ -88,6 +89,7 @@ async def startup_event():
     """Log startup information."""
     logger.info("=" * 60)
     logger.info("🚀 Tensoria API starting...")
+    logger.info("DEBUG: Startup event triggered")
     logger.info(f"📍 Ollama URL: {settings.ollama_base_url}")
     logger.info(f"⏱️  Timeout: {settings.ollama_timeout}s")
     logger.info(f"📊 Log level: {settings.log_level}")

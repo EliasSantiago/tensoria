@@ -86,8 +86,10 @@ class OllamaClient:
     async def health_check(self) -> bool:
         """Check if Ollama is accessible."""
         try:
+            logger.info(f"DEBUG: Checking Ollama health at {self.base_url}...")
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get(f"{self.base_url}/api/tags")
+                logger.info(f"DEBUG: Ollama health response: {response.status_code}")
                 return response.status_code == 200
         except Exception as e:
             logger.warning(f"Ollama health check failed: {e}")
