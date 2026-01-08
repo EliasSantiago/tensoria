@@ -13,11 +13,17 @@ spec:
         run.googleapis.com/execution-environment: gen2
         # CPU boost for faster startup
         run.googleapis.com/cpu-startup-boost: "true"
-
+        # Enable Beta features (required for GPU)
+        run.googleapis.com/launch-stage: BETA
+        
         # Scaling limits
         autoscaling.knative.dev/minScale: "0"
         autoscaling.knative.dev/maxScale: "1"
     spec:
+      # Request GPU Node
+      nodeSelector:
+        run.googleapis.com/accelerator: nvidia-l4
+        
       containers:
       # ---------------------------------------------------------
       # 1. API Container (Ingress)
@@ -27,6 +33,8 @@ spec:
         ports:
         - containerPort: 8000
         env:
+        - name: PORT
+          value: "8000"
         - name: OLLAMA_BASE_URL
           value: "http://localhost:11434"
         - name: API_KEY
@@ -41,7 +49,7 @@ spec:
           tcpSocket:
             port: 8000
           periodSeconds: 5
-          failureThreshold: 20
+          failureThreshold: 60
             
       # ---------------------------------------------------------
       # 2. Ollama Sidecar (Inference Engine)
@@ -57,20 +65,19 @@ spec:
         volumeMounts:
         - name: ollama-models
           mountPath: /root/.ollama
-        # GPU Support Configuration
-        # ---------------------------------------------------------
-        # run.googleapis.com/container-dependencies is not needed for sidecars in Cloud Run
-        # but we need to request the GPU resource.
+        
         resources:
           limits:
-            cpu: "6000m"      # 6 vCPUs (Total limit is 8000m, API takes 2000m)
-            memory: "16Gi"    # 16 GB RAM (Max for 6 vCPUs)
+            # GPU Configuration
+            nvidia.com/gpu: "1"
+            cpu: "4000m"      # 4 vCPUs
+            memory: "16Gi"    # 16 GB RAM
         startupProbe:
           httpGet:
             path: /api/tags
             port: 11434
           periodSeconds: 10
-          failureThreshold: 60 # Increased timeout for model loading
+          failureThreshold: 60 # 10 minutes for model loading/startup
           
       # ---------------------------------------------------------
       # Volumes
