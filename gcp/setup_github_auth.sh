@@ -63,6 +63,12 @@ PROVIDER_ID=$(gcloud iam workload-identity-pools providers describe ${WORKLOAD_I
     --workload-identity-pool=${WORKLOAD_IDENTITY_POOL} \
     --format="value(name)")
 
+# Artifact Registry Writer (for pushing images)
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role="roles/artifactregistry.writer"
+# Storage Admin (for image push and bucket access)
+
 echo ""
 echo "✅ Setup Complete!"
 echo "====================================================="

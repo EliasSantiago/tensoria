@@ -4,8 +4,7 @@ metadata:
   name: tensoria
   labels:
     cloud.googleapis.com/location: us-central1
-  annotations:
-    run.googleapis.com/launch-stage: BETA
+
 spec:
   template:
     metadata:
@@ -14,8 +13,7 @@ spec:
         run.googleapis.com/execution-environment: gen2
         # CPU boost for faster startup
         run.googleapis.com/cpu-startup-boost: "true"
-        # Disable GPU zonal redundancy due to quota limits
-        run.googleapis.com/gpu-zonal-redundancy-disabled: "true"
+
         # Scaling limits
         autoscaling.knative.dev/minScale: "0"
         autoscaling.knative.dev/maxScale: "1"
@@ -38,7 +36,7 @@ spec:
         resources:
           limits:
             cpu: "2000m"
-            memory: "512Mi"
+            memory: "2Gi"
             
       # ---------------------------------------------------------
       # 2. Ollama Sidecar (Inference Engine)
@@ -61,8 +59,7 @@ spec:
         resources:
           limits:
             cpu: "6000m"      # 6 vCPUs (Total limit is 8000m, API takes 2000m)
-            memory: "24Gi"    # 24 GB RAM (Max for 6 vCPUs)
-            nvidia.com/gpu: "1" # 1 NVIDIA L4 GPU
+            memory: "16Gi"    # 16 GB RAM (Max for 6 vCPUs)
         startupProbe:
           httpGet:
             path: /api/tags
