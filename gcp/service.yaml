@@ -37,6 +37,12 @@ spec:
           limits:
             cpu: "2000m"
             memory: "2Gi"
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 5
+          failureThreshold: 20
             
       # ---------------------------------------------------------
       # 2. Ollama Sidecar (Inference Engine)
