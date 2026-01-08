@@ -24,7 +24,7 @@ spec:
     spec:
       # Request GPU Node
       nodeSelector:
-        run.googleapis.com/accelerator: nvidia-l4
+        run.googleapis.com/accelerator: nvidia-t4
         
       containers:
       # ---------------------------------------------------------
