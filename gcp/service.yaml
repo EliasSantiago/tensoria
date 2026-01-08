@@ -15,6 +15,8 @@ spec:
         run.googleapis.com/cpu-startup-boost: "true"
         # Enable Beta features (required for GPU)
         run.googleapis.com/launch-stage: BETA
+        # Disable GPU zonal redundancy (quota fix)
+        run.googleapis.com/gpu-zonal-redundancy-disabled: 'true'
         
         # Scaling limits
         autoscaling.knative.dev/minScale: "0"
