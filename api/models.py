@@ -101,6 +101,17 @@ class ModelsListResponse(BaseModel):
     data: list[ModelInfo]
 
 
+class PullModelRequest(BaseModel):
+    """Request body for pulling a model."""
+    name: str
+
+
+class PullModelResponse(BaseModel):
+    """Response body for pulling a model."""
+    status: str
+    message: str
+
+
 # =============================================================================
 # Health Check
 # =============================================================================

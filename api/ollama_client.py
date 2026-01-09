@@ -184,6 +184,38 @@ class OllamaClient:
         
         result = await self._request("POST", "/api/generate", payload, stream=stream)
         return result
+    
+    async def pull_model(self, model: str) -> dict:
+        """
+        Pull a model from the Ollama library.
+        
+        Args:
+            model: The name of the model to pull (e.g., "mistral")
+            
+        Returns:
+            The final response from Ollama.
+        """
+        logger.info(f"⬇️ Pulling model: {model}")
+        
+        # We use stream=False to wait for the full download (can take a while)
+        # For a better UX in the future, we should implement streaming
+        payload = {
+            "name": model,
+            "stream": False
+        }
+        
+        try:
+            # Increase timeout specifically for pull operations as they can take a long time
+            async with httpx.AsyncClient(timeout=1200.0) as client: # 20 minutes timeout
+                response = await client.post(f"{self.base_url}/api/pull", json=payload)
+                response.raise_for_status()
+                return response.json()
+        except httpx.TimeoutException:
+            logger.error(f"Timeout pulling model {model}")
+            raise OllamaError(f"Timeout pulling model {model}")
+        except Exception as e:
+            logger.error(f"Error pulling model {model}: {e}")
+            raise OllamaError(f"Error pulling model: {str(e)}")
 
 
 # Singleton client instance
