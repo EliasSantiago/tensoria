@@ -41,7 +41,7 @@ spec:
           tcpSocket:
             port: 8000
           periodSeconds: 5
-          failureThreshold: 60
+          failureThreshold: 120 # Increased to 10 minutes
             
       # ---------------------------------------------------------
       # 2. Ollama Sidecar (Inference Engine)
@@ -68,7 +68,7 @@ spec:
             path: /api/tags
             port: 11434
           periodSeconds: 10
-          failureThreshold: 60 # 10 minutes for model loading/startup
+          failureThreshold: 120 # Increased to 20 minutes
           
       # ---------------------------------------------------------
       # Volumes
