@@ -13,19 +13,11 @@ spec:
         run.googleapis.com/execution-environment: gen2
         # CPU boost for faster startup
         run.googleapis.com/cpu-startup-boost: "true"
-        # Enable Beta features (required for GPU)
-        run.googleapis.com/launch-stage: BETA
-        # Disable GPU zonal redundancy (quota fix)
-        run.googleapis.com/gpu-zonal-redundancy-disabled: 'true'
         
         # Scaling limits
         autoscaling.knative.dev/minScale: "0"
         autoscaling.knative.dev/maxScale: "1"
     spec:
-      # Request GPU Node
-      nodeSelector:
-        run.googleapis.com/accelerator: nvidia-l4
-        
       containers:
       # ---------------------------------------------------------
       # 1. API Container (Ingress)
@@ -43,8 +35,8 @@ spec:
           value: "INFO"
         resources:
           limits:
-            cpu: "2000m"
-            memory: "2Gi"
+            cpu: "1000m"
+            memory: "1Gi"
         startupProbe:
           tcpSocket:
             port: 8000
@@ -68,8 +60,7 @@ spec:
         
         resources:
           limits:
-            # GPU Configuration
-            nvidia.com/gpu: "1"
+            # CPU Configuration (No GPU)
             cpu: "4000m"      # 4 vCPUs
             memory: "16Gi"    # 16 GB RAM
         startupProbe:
