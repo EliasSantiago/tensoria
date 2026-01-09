@@ -50,7 +50,7 @@ spec:
         name: ollama
         env:
         - name: OLLAMA_HOST
-          value: "localhost:11434"
+          value: "0.0.0.0"
         # Keep models in memory for 5 minutes
         - name: OLLAMA_KEEP_ALIVE
           value: "5m"
@@ -64,8 +64,7 @@ spec:
             cpu: "4000m"      # 4 vCPUs
             memory: "16Gi"    # 16 GB RAM
         startupProbe:
-          httpGet:
-            path: /api/tags
+          tcpSocket:
             port: 11434
           periodSeconds: 10
           failureThreshold: 120 # Increased to 20 minutes
