@@ -87,3 +87,43 @@ async def pull_model(
                 }
             },
         )
+
+
+@router.delete(
+    "/models/{model_name:path}",
+    responses={
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        404: {"model": ErrorResponse, "description": "Model not found"},
+        500: {"model": ErrorResponse, "description": "Server error"},
+    },
+)
+async def delete_model(
+    model_name: str,
+    api_key: str = Depends(verify_api_key)
+):
+    """
+    Delete a model from Ollama.
+    """
+    client = get_ollama_client()
+    
+    try:
+        logger.info(f"Request to delete model: {model_name}")
+        await client.delete_model(model_name)
+        
+        return {
+            "status": "success",
+            "message": f"Model '{model_name}' deleted successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error deleting model: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "message": str(e),
+                    "type": "server_error",
+                    "code": "delete_error",
+                }
+            },
+        )

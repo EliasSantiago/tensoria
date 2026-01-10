@@ -217,6 +217,27 @@ class OllamaClient:
             logger.error(f"Error pulling model {model}: {e}")
             raise OllamaError(f"Error pulling model: {str(e)}")
 
+    async def delete_model(self, model: str) -> bool:
+        """
+        Delete a model from Ollama.
+        
+        Args:
+            model: The name of the model to delete
+            
+        Returns:
+            True if successful
+        """
+        logger.info(f"🗑️ Deleting model: {model}")
+        
+        payload = {"name": model}
+        
+        try:
+            await self._request("DELETE", "/api/delete", payload)
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting model {model}: {e}")
+            raise OllamaError(f"Error deleting model: {str(e)}")
+
 
 # Singleton client instance
 _client: Optional[OllamaClient] = None
