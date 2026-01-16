@@ -478,8 +478,3 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
----
-
-**Tensoria** - Infraestrutura de IA Open Source
-
-Desenvolvido com ❤️ usando Python, FastAPI, Ollama e Docker
