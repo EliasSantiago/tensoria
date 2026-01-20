@@ -22,33 +22,120 @@ Tensoria é uma infraestrutura de API para modelos LLM open-source que:
 
 ## 🏗️ Arquitetura
 
+### Diagrama de Fluxo de Dados
+
+```mermaid
+graph TB
+    subgraph "ENTRADA DE DADOS"
+        CLIENT[Cliente HTTP<br/>OrkestrAI API ou Outros]
+        API_REQ[Requisições REST<br/>OpenAI-Compatible API]
+        AUTH_HEADER[Header X-API-Key<br/>Autenticação]
+    end
+
+    subgraph "ORQUESTRAÇÃO"
+        FASTAPI[FastAPI Router<br/>Endpoints REST]
+        MIDDLEWARE[Middleware<br/>Auth, Logging]
+        ROUTES[Routes<br/>/v1/chat/completions<br/>/v1/completions<br/>/v1/models]
+        OLLAMA_CLIENT[Ollama Client<br/>HTTP Client para Ollama]
+    end
+
+    subgraph "IA - INFERÊNCIA"
+        OLLAMA_SERVICE[Ollama Service<br/>Container Docker]
+        LLM_ENGINE[LLM Engine<br/>Inferência Local]
+        MODEL_LOADER[Model Loader<br/>Carregamento de Modelos]
+    end
+
+    subgraph "PERSISTÊNCIA"
+        MODEL_STORAGE[(Persistent Volume<br/>Modelos Baixados)]
+        CONFIG[Configurações<br/>Variáveis de Ambiente]
+    end
+
+    subgraph "SAÍDA"
+        STREAM_RESPONSE[Streaming Response<br/>Chunks de Texto]
+        JSON_RESPONSE[Resposta JSON<br/>OpenAI-Compatible]
+        ERROR_HANDLING[Error Handling<br/>Tratamento de Erros]
+    end
+
+    CLIENT -->|HTTPS| API_REQ
+    API_REQ -->|X-API-Key| AUTH_HEADER
+    
+    AUTH_HEADER --> MIDDLEWARE
+    API_REQ --> FASTAPI
+    
+    FASTAPI --> MIDDLEWARE
+    MIDDLEWARE --> ROUTES
+    
+    ROUTES --> OLLAMA_CLIENT
+    OLLAMA_CLIENT -->|HTTP| OLLAMA_SERVICE
+    
+    OLLAMA_SERVICE --> LLM_ENGINE
+    LLM_ENGINE --> MODEL_LOADER
+    MODEL_LOADER -->|Carregar| MODEL_STORAGE
+    
+    OLLAMA_SERVICE -->|Stream| STREAM_RESPONSE
+    OLLAMA_SERVICE -->|JSON| JSON_RESPONSE
+    
+    STREAM_RESPONSE -->|SSE/JSON| CLIENT
+    JSON_RESPONSE -->|JSON| CLIENT
+    
+    ROUTES --> ERROR_HANDLING
+    ERROR_HANDLING -->|Error JSON| CLIENT
+    
+    CONFIG -->|Settings| FASTAPI
+    CONFIG -->|Settings| OLLAMA_CLIENT
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Tensoria                                │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   ┌─────────────┐         ┌─────────────────────────────┐   │
-│   │   Client    │ ──────▶ │  FastAPI Backend (API)     │   │
-│   └─────────────┘         │  - /v1/chat/completions    │   │
-│                           │  - /v1/completions         │   │
-│                           │  - /v1/models              │   │
-│                           │  - /health                 │   │
-│                           └───────────┬─────────────────┘   │
-│                                       │                      │
-│                                       ▼                      │
-│                           ┌─────────────────────────────┐   │
-│                           │       Ollama Service        │   │
-│                           │  (LLM Inference Engine)     │   │
-│                           └───────────┬─────────────────┘   │
-│                                       │                      │
-│                                       ▼                      │
-│                           ┌─────────────────────────────┐   │
-│                           │   Persistent Volume         │   │
-│                           │   (Downloaded Models)       │   │
-│                           └─────────────────────────────┘   │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+
+### Decisões Arquiteturais Principais
+
+#### 1. **API Compatível com OpenAI**
+- **Decisão:** Implementação de endpoints compatíveis com OpenAI (`/v1/chat/completions`, `/v1/completions`)
+- **Motivo:** Permite uso de qualquer cliente OpenAI existente sem modificações
+- **Impacto:** Facilita integração e reduz fricção para desenvolvedores
+
+#### 2. **Ollama como Engine de Inferência**
+- **Decisão:** Ollama como serviço de inferência em vez de implementação própria
+- **Motivo:** Ollama é maduro, suporta muitos modelos e gerencia eficientemente GPU/CPU
+- **Impacto:** Foco no wrapper/API em vez de infraestrutura de inferência
+
+#### 3. **Containerização com Docker Compose**
+- **Decisão:** Separação em containers: API FastAPI + Ollama Service
+- **Motivo:** Isolamento, escalabilidade independente e facilidade de deploy
+- **Impacto:** Deploy simplificado e manutenção mais fácil
+
+#### 4. **Persistent Volume para Modelos**
+- **Decisão:** Volume Docker persistente para armazenar modelos baixados
+- **Motivo:** Modelos não são perdidos ao reiniciar containers
+- **Impacto:** Melhor experiência de uso e economia de banda
+
+#### 5. **Autenticação via API Key**
+- **Decisão:** Autenticação simples via header `X-API-Key`
+- **Motivo:** Simplicidade e compatibilidade com padrões de API
+- **Impacto:** Segurança adequada sem complexidade desnecessária
+
+#### 6. **Streaming de Respostas**
+- **Decisão:** Suporte a streaming de respostas (SSE ou JSON streaming)
+- **Motivo:** Experiência de usuário melhor com feedback em tempo real
+- **Impacto:** Reduz percepção de latência, especialmente para modelos maiores
+
+#### 7. **Nginx como Reverse Proxy (Produção)**
+- **Decisão:** Nginx na frente da API em produção com IP allowlist
+- **Motivo:** Segurança adicional e controle de acesso
+- **Impacto:** Camada extra de proteção para ambientes de produção
+
+#### 8. **Modelos Não Baixados Automaticamente**
+- **Decisão:** Modelos devem ser baixados manualmente via `ollama pull`
+- **Motivo:** Controle sobre espaço em disco e escolha de modelos
+- **Impacto:** Flexibilidade para o usuário escolher modelos adequados ao seu caso
+
+#### 9. **Timeout e Keep-Alive Configuráveis**
+- **Decisão:** Variáveis de ambiente para controlar timeouts e keep-alive
+- **Motivo:** Flexibilidade para diferentes cenários (modelos rápidos vs lentos)
+- **Impacto:** Melhor adaptação a diferentes modelos e hardware
+
+#### 10. **Desabilitação de Docs em Produção**
+- **Decisão:** Endpoints `/docs`, `/redoc` desabilitados quando `API_KEY` está configurada
+- **Motivo:** Segurança - não expor documentação em produção
+- **Impacto:** Redução de superfície de ataque
 
 ## 🚀 Quick Start
 
