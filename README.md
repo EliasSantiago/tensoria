@@ -2,7 +2,7 @@
 
 API de inferência de LLMs open source compatível com OpenAI, construída com FastAPI e Ollama. Fornece uma interface padronizada para executar modelos LLM open-source localmente ou em servidores dedicados.
 
-## 🎯 O que é?
+## O que é?
 
 Tensoria é uma infraestrutura de API para modelos LLM open-source que:
 
@@ -20,7 +20,7 @@ Tensoria é uma infraestrutura de API para modelos LLM open-source que:
 - Infraestrutura privada para modelos de IA
 - Integração com plataformas que precisam de API compatível com OpenAI
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 ### Diagrama de Fluxo de Dados
 
@@ -137,7 +137,7 @@ graph TB
 - **Motivo:** Segurança - não expor documentação em produção
 - **Impacto:** Redução de superfície de ataque
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Pré-requisitos
 
@@ -168,11 +168,11 @@ docker exec -it tensoria-ollama ollama pull mistral
 curl http://localhost:8002/v1/models
 ```
 
-> ⚠️ **IMPORTANTE**: Nenhum modelo é baixado automaticamente!
+>  **IMPORTANTE**: Nenhum modelo é baixado automaticamente!
 
 ### 2. Instalar modelos manualmente
 
-⚠️ **IMPORTANTE**: Nenhum modelo é baixado automaticamente! Você precisa baixar manualmente os modelos que deseja usar.
+ **IMPORTANTE**: Nenhum modelo é baixado automaticamente! Você precisa baixar manualmente os modelos que deseja usar.
 
 #### Como baixar um modelo específico
 
@@ -284,7 +284,7 @@ curl http://localhost:8002/health
 curl http://localhost:8002/v1/models
 ```
 
-## 📡 Endpoints da API
+##  Endpoints da API
 
 ### Chat Completions (OpenAI-compatible)
 
@@ -324,7 +324,7 @@ curl http://localhost:8002/v1/models
 curl http://localhost:8002/health
 ```
 
-## 🔒 Segurança
+##  Segurança
 
 O Tensoria implementa múltiplas camadas de segurança:
 
@@ -354,7 +354,7 @@ curl -X POST https://tensoria.orkestrai.com.br/v1/chat/completions \
 O Nginx está configurado para aceitar apenas requisições do servidor orkestrai-api:
 
 ```nginx
-allow 34.42.168.19;  # orkestrai-api
+allow ip_servidor;  # orkestrai-api
 deny all;
 ```
 
@@ -362,7 +362,7 @@ deny all;
 
 Quando `API_KEY` está configurada, os endpoints `/docs`, `/redoc` e `/openapi.json` são desabilitados automaticamente.
 
-## ⚙️ Configuração
+##  Configuração
 
 Variáveis de ambiente disponíveis (arquivo `.env`):
 
@@ -386,7 +386,7 @@ MAX_TOKENS=4096
 DEFAULT_TEMPERATURE=0.7
 ```
 
-## 🤖 Modelos Suportados
+##  Modelos Suportados
 
 | Modelo | Tamanho | Uso Recomendado |
 |--------|---------|-----------------|
@@ -398,7 +398,7 @@ DEFAULT_TEMPERATURE=0.7
 | `qwen:7b` | ~4GB | Uso geral, multilíngue |
 | `qwen2:7b` | ~4GB | Versão mais recente |
 
-## 🔧 Comandos Úteis
+##  Comandos Úteis
 
 ### Gerenciamento de Containers
 
@@ -415,7 +415,7 @@ docker compose logs -f
 # Parar tudo
 docker compose down
 
-# Parar e remover volumes (⚠️ apaga modelos baixados!)
+# Parar e remover volumes (apaga modelos baixados!)
 docker compose down -v
 
 # Reiniciar serviços
@@ -459,7 +459,7 @@ curl -X POST http://localhost:8002/v1/chat/completions \
   }'
 ```
 
-## 🔮 Preparação para Futuro
+## Preparação para Futuro
 
 Esta arquitetura foi projetada para permitir:
 
@@ -469,7 +469,7 @@ Esta arquitetura foi projetada para permitir:
 - [ ] Uso como provider interno do OrkestrAI
 - [ ] Escalonamento por GPU/VRAM
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 tensoria/
@@ -491,7 +491,7 @@ tensoria/
         └── health.py     # /health
 ```
 
-## 🛡️ Produção
+## Produção
 
 Para deploy em GCP:
 
@@ -501,7 +501,7 @@ Para deploy em GCP:
 4. Implementar autenticação
 5. Configurar monitoramento
 
-## 📝 Exemplo Completo de Uso
+## Exemplo Completo de Uso
 
 ### 1. Subir os serviços
 
